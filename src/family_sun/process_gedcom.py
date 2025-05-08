@@ -47,8 +47,6 @@ def get_ancestors_structure(parser: Parser) -> dict[str, list[str]]:
     The keys of the dictionary are comma-concatenated parents of the individual.
     The values of the dictionary are the name of the individual.
 
-    The structure avoid the issue of homonyms.
-
     Args:
         parser: The GEDCOM parser.
 
@@ -58,9 +56,9 @@ def get_ancestors_structure(parser: Parser) -> dict[str, list[str]]:
     ancestors = {}
     individual_elements = list(filter(lambda x: isinstance(x, IndividualElement), parser.get_root_child_elements()))
 
-    # TODO: ambiguity in chart display because of homonyms. Add Sr and Jr?
     for individual in individual_elements:
         individual_name = " ".join(individual.get_name())
+        
         parents = parser.get_parents(individual=individual)
         if not parents:
             ancestor_key = f"{individual_name}'s father,{individual_name}'s mother"

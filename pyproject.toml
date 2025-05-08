@@ -1,0 +1,14 @@
+[project]
+name = "family-sun"
+version = "0.1.0"
+dependencies = [
+    "click",
+    "kaleido",
+    "numpy",
+    "pandas",
+    "plotly",
+    "python-gedcom"
+]
+
+[project.scripts]
+family-sun = "family_sun.generate_family_tree:generate_sunburst_from_gedcom"

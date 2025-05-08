@@ -1,3 +1,4 @@
 venv/
 *.ged
 __pycache__/
+*.egg-info/

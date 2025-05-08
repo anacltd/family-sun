@@ -7,7 +7,9 @@ dependencies = [
     "numpy",
     "pandas",
     "plotly",
-    "python-gedcom"
+    "pre-commit",
+    "python-gedcom",
+    "ruff"
 ]
 
 [project.scripts]

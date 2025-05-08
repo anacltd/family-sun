@@ -17,7 +17,11 @@ def get_generations(parser: Parser) -> dict[int, list[list[str]]]:
     Returns:
         The generations in the form of a dictionary.
     """
-    individual_elements = list(filter(lambda x: isinstance(x, IndividualElement), parser.get_root_child_elements()))
+    individual_elements = list(
+        filter(
+            lambda x: isinstance(x, IndividualElement), parser.get_root_child_elements()
+        )
+    )
     root_individual = individual_elements[0]
 
     n = 1
@@ -42,6 +46,7 @@ def get_generations(parser: Parser) -> dict[int, list[list[str]]]:
 
     return individuals
 
+
 def get_ancestors_structure(parser: Parser) -> dict[str, list[str]]:
     """Create a dictionary to keep track of family relationships.
     The keys of the dictionary are comma-concatenated parents of the individual.
@@ -54,11 +59,15 @@ def get_ancestors_structure(parser: Parser) -> dict[str, list[str]]:
         A dictionary with the name of each individuals and their parents.
     """
     ancestors = {}
-    individual_elements = list(filter(lambda x: isinstance(x, IndividualElement), parser.get_root_child_elements()))
+    individual_elements = list(
+        filter(
+            lambda x: isinstance(x, IndividualElement), parser.get_root_child_elements()
+        )
+    )
 
     for individual in individual_elements:
         individual_name = " ".join(individual.get_name())
-        
+
         parents = parser.get_parents(individual=individual)
         if not parents:
             ancestor_key = f"{individual_name}'s father,{individual_name}'s mother"

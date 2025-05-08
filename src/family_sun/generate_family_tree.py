@@ -6,9 +6,17 @@ import click
 
 
 @click.command()
-@click.option('--gedcom_path', default='gedcom.ged', help='Path to the GEDCOM file.')
-@click.option('--color_scale', default="Brwnyl", help='The name of the Plotly color scale. Default to Brwnyl.')
-@click.option('--save', default=False, help='The name of the Plotly color scale. Default to Brwnyl.')
+@click.option("--gedcom_path", default="gedcom.ged", help="Path to the GEDCOM file.")
+@click.option(
+    "--color_scale",
+    default="Brwnyl",
+    help="The name of the Plotly color scale. Default to Brwnyl.",
+)
+@click.option(
+    "--save",
+    default=False,
+    help="The name of the Plotly color scale. Default to Brwnyl.",
+)
 def generate_sunburst_from_gedcom(gedcom_path: str, color_scale: str, save: bool):
     """Generate a Plotly sunburst graph from a GEDCOM file.
 
@@ -30,8 +38,9 @@ def generate_sunburst_from_gedcom(gedcom_path: str, color_scale: str, save: bool
             if isinstance(individuals, str):
                 individuals = [individuals]
             for individual in individuals:
-
-                individual_parents = list(ancestors.keys())[list(ancestors.values()).index(individual)]
+                individual_parents = list(ancestors.keys())[
+                    list(ancestors.values()).index(individual)
+                ]
 
                 if generation_number == 1:
                     parents.append(individual)
@@ -42,35 +51,38 @@ def generate_sunburst_from_gedcom(gedcom_path: str, color_scale: str, save: bool
                 if generation_number == 1:
                     values.append(100)  # root of the sunburst chart
                 else:
-                    value = 34 / (2 ** (generation_number - 2))  # 34 so that it makes a "split" at the bottom
+                    value = 34 / (
+                        2 ** (generation_number - 2)
+                    )  # 34 so that it makes a "split" at the bottom
                     values.append(value)
                     generations.append(generation_number)
 
-
     data = pd.DataFrame(
         {
-            "individuals": parents[:len(values)],
-            "parents": children[:len(values)],
+            "individuals": parents[: len(values)],
+            "parents": children[: len(values)],
             "values": values,
-            "generation": generations
+            "generation": generations,
         }
     )
 
     fig = px.sunburst(
         data,
-        names='individuals',
-        parents='parents',
-        values='values',
-        color='generation',
+        names="individuals",
+        parents="parents",
+        values="values",
+        color="generation",
         color_continuous_scale=color_scale,
-        branchvalues='total'
+        branchvalues="total",
     )
-    fig.update_traces(rotation=-30)  # So that the bottom split is not tilted to the left
+    fig.update_traces(
+        rotation=-30
+    )  # So that the bottom split is not tilted to the left
     fig.update_coloraxes(showscale=False)
     fig.show()
     if save:
         fig.write_image("family_tree.png", width=1000, height=1000)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     generate_sunburst_from_gedcom()

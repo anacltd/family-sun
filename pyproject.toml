@@ -1,6 +1,12 @@
 [project]
 name = "family-sun"
 version = "0.1.0"
+authors = [
+  { name="Ana Calatayud", email="ana.calatayud@outlook.com" },
+]
+description = "Python package that generates a sunburst chart from a GEDOM file."
+readme = "README.md"
+requires-python = ">=3.10"
 dependencies = [
     "click",
     "kaleido",
@@ -11,6 +17,16 @@ dependencies = [
     "python-gedcom",
     "ruff"
 ]
+license = "GNU GPLv3"
+license-files = ["COPYING"]
+
+[project.urls]
+Homepage = "https://github.com/anacltd/family-sun"
+Issues = "https://github.com/anacltd/family-sun/issues"
+
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
 
 [project.scripts]
-family-sun = "family_sun.generate_family_tree:generate_sunburst_from_gedcom"
+generate-tree = "family_sun.generate_family_tree:generate_sunburst_from_gedcom"

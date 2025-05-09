@@ -31,8 +31,7 @@ def get_generations(parser: Parser) -> dict[int, list[list[str]]]:
     keep_looping = True
 
     while keep_looping:
-        generation = []
-        ancestors = []
+        generation, ancestors = [], []
         for i in next_individuals:
             parents = parser.get_parents(individual=i)
             ancestors.extend(parents)
@@ -49,8 +48,8 @@ def get_generations(parser: Parser) -> dict[int, list[list[str]]]:
 
 def get_ancestors_structure(parser: Parser) -> dict[str, list[str]]:
     """Create a dictionary to keep track of family relationships.
-    The keys of the dictionary are comma-concatenated parents of the individual.
-    The values of the dictionary are the name of the individual.
+    The keys of the dictionary are the name of each individual.
+    The values of the dictionary are the names of the individual's parents.
 
     Args:
         parser: The GEDCOM parser.
@@ -58,20 +57,25 @@ def get_ancestors_structure(parser: Parser) -> dict[str, list[str]]:
     Returns:
         A dictionary with the name of each individuals and their parents.
     """
-    ancestors = {}
-    individual_elements = list(
-        filter(
-            lambda x: isinstance(x, IndividualElement), parser.get_root_child_elements()
+    ancestors = {
+        " ".join(individual.get_name()): [
+            " ".join(p.get_name()) for p in parser.get_parents(individual)
+        ]
+        for individual in filter(
+            lambda x: isinstance(x, IndividualElement),
+            parser.get_root_child_elements(),
         )
-    )
-
-    for individual in individual_elements:
-        individual_name = " ".join(individual.get_name())
-
-        parents = parser.get_parents(individual=individual)
-        if not parents:
-            ancestor_key = f"{individual_name}'s father,{individual_name}'s mother"
-        else:
-            ancestor_key = ",".join([" ".join(p.get_name()) for p in parents])
-        ancestors[ancestor_key] = individual_name
+    }
     return ancestors
+    # ancestors = {}
+    # individual_elements = list(
+    #     filter(
+    #         lambda x: isinstance(x, IndividualElement), parser.get_root_child_elements()
+    #     )
+    # )
+
+    # for individual in individual_elements:
+    #     individual_name = " ".join(individual.get_name())
+    #     parents = parser.get_parents(individual=individual)
+    #     ancestors[individual_name] = [" ".join(p.get_name()) for p in parents]
+    # return ancestors

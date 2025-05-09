@@ -49,5 +49,4 @@ pip install -e .
 
 
 # TODO
-[ ] Add option to display dates and places  
-[ ] Add places and dates as `color-by` options
+[ ] Add option to display dates and places

@@ -6,6 +6,28 @@ import click
 import re
 
 
+def add_place_and_date_data(row: pd.Series) -> str:
+    """Add additional place and date data to an individual so it can be displayed
+    on the chart by hivering.
+
+    Args:
+        row : The pandas dataframe row to process.
+
+    Returns:
+        Additional birth date and place data.
+    """
+    lines = [f"<b>{row['individuals']}</b>"]
+    if pd.notna(row["birth_years"]):
+        lines.append(f"Born in {int(row['birth_years'])}")
+    if pd.notna(row["birth_places"]):
+        lines.append(f"({row['birth_places']})")
+    if pd.notna(row["death_years"]):
+        lines.append(f"Died in {int(row['death_years'])}")
+    if pd.notna(row["death_places"]):
+        lines.append(f"({row['death_places']})")
+    return "<br>".join(lines)
+
+
 @click.command()
 @click.option("--gedcom-path", default="gedcom.ged", help="Path to the GEDCOM file.")
 @click.option(
@@ -21,7 +43,16 @@ import re
 @click.option(
     "--color-by",
     default="generations",
-    type=click.Choice(["generations", "patronyms"]),
+    type=click.Choice(
+        [
+            "generations",
+            "patronyms",
+            "birth_places",
+            "birth_years",
+            "death_places",
+            "death_years",
+        ]
+    ),
     help="The category used to color the chart.",
 )
 @click.option(
@@ -54,8 +85,12 @@ def generate_sunburst_from_gedcom(
     generations_dict = get_generations(gedcom_parser)
 
     parents, children, values = [], [""], []  # The base data for the sunburst chart
-    generations, patronyms = (
+    generations, patronyms, birth_places, birth_years, death_places, death_years = (
         [1],
+        [],
+        [],
+        [],
+        [],
         [],
     )  # To color the chart based on the generations or the patronyms
 
@@ -66,7 +101,12 @@ def generate_sunburst_from_gedcom(
             if isinstance(individuals, str):
                 individuals = [individuals]
             for individual in individuals:
-                individual_parents = ancestors.get(individual)
+                individual_data = ancestors.get(individual, {})
+                individual_parents = individual_data.get("parents")
+                birth_years.append(individual_data.get("birth", None))
+                birth_places.append(individual_data.get("birth_place", None))
+                death_years.append(individual_data.get("death", None))
+                death_places.append(individual_data.get("death_year", None))
 
                 if generation_number == 1:  # root of the sunburst chart
                     parents.append(individual)
@@ -116,8 +156,13 @@ def generate_sunburst_from_gedcom(
             "values": values,
             "generations": generations,
             "patronyms": patronyms,
+            "birth_places": birth_places,
+            "birth_years": birth_years,
+            "death_places": death_places,
+            "death_years": death_years,
         }
     )
+    data["hover_text"] = data.apply(add_place_and_date_data, axis=1)
 
     kwargs = {
         "data_frame": data,
@@ -127,20 +172,30 @@ def generate_sunburst_from_gedcom(
         "color": color_by,
         "branchvalues": "total",
     }
-    if color_by == "patronyms":
-        kwargs["color_discrete_sequence"] = getattr(
+
+    if pd.api.types.is_numeric_dtype(data[color_by]):
+        kwargs["color_continuous_scale"] = color_scale
+    else:
+        palette = getattr(
             px.colors.qualitative, color_scale.title(), px.colors.qualitative.Pastel1
         )
-    else:
-        kwargs["color_continuous_scale"] = color_scale
+        kwargs["color_discrete_sequence"] = palette
 
     fig = px.sunburst(**kwargs)
     fig.update_traces(
         rotation=-30
     )  # So that the bottom split is not tilted to the left
     fig.update_traces(insidetextorientation="radial")
+    fig.update_traces(
+        hovertemplate="%{customdata[0]}<extra></extra>",
+        customdata=data[["hover_text"]].values,
+    )
     fig.update_coloraxes(showscale=False)
     fig.show()
 
     if save:
         fig.write_image("family_tree.png", width=3000, height=2500)
+
+
+if __name__ == "__main__":
+    generate_sunburst_from_gedcom()

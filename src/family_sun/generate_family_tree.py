@@ -1,39 +1,25 @@
 import pandas as pd
-from family_sun.process_gedcom import get_generations, get_ancestors_structure
+from family_sun.utils.process_gedcom import get_generations, get_ancestors_structure
+from family_sun.utils.metadata import (
+    add_place_and_date_data,
+    color_by_category,
+    extract_patronyms,
+    wrap_text,
+    add_dates_to_names,
+)
+from family_sun.utils import color_palettes
 import plotly.express as px
 from gedcom.parser import Parser
 import click
-import re
-
-
-def add_place_and_date_data(row: pd.Series) -> str:
-    """Add additional place and date data to an individual so it can be displayed
-    on the chart by hivering.
-
-    Args:
-        row : The pandas dataframe row to process.
-
-    Returns:
-        Additional birth date and place data.
-    """
-    lines = [f"<b>{row['individuals']}</b>"]
-    if pd.notna(row["birth_years"]):
-        lines.append(f"Born in {int(row['birth_years'])}")
-    if pd.notna(row["birth_places"]):
-        lines.append(f"({row['birth_places']})")
-    if pd.notna(row["death_years"]):
-        lines.append(f"Died in {int(row['death_years'])}")
-    if pd.notna(row["death_places"]):
-        lines.append(f"({row['death_places']})")
-    return "<br>".join(lines)
 
 
 @click.command()
+@click.option("--root", default="", help="The name of the root individual.")
 @click.option("--gedcom-path", default="gedcom.ged", help="Path to the GEDCOM file.")
 @click.option(
     "--color-scale",
-    default="gray",
-    help="The name of the Plotly color scale.",
+    default="earth",
+    help="The name of the color scale.",
 )
 @click.option(
     "--nb-of-generations",
@@ -47,9 +33,9 @@ def add_place_and_date_data(row: pd.Series) -> str:
         [
             "generations",
             "patronyms",
-            "birth_places",
-            "birth_years",
-            "death_places",
+            "regions",
+            "departments",
+            "citiesbirth_years",
             "death_years",
         ]
     ),
@@ -61,6 +47,7 @@ def add_place_and_date_data(row: pd.Series) -> str:
     help="Whether to save the file as a PNG.",
 )
 def generate_sunburst_from_gedcom(
+    root: str,
     gedcom_path: str,
     color_scale: str,
     nb_of_generations: int,
@@ -71,9 +58,7 @@ def generate_sunburst_from_gedcom(
 
     Args:
         gedcom_path: The path to the GEDCOM file.
-        color_scale: Name of the Plotly color scale.
-        When using `generations` to color the chart, refer to [continuous color scales](https://plotly.com/python/builtin-colorscales/)).
-        When using `patronyms` to color the chart, refer to [discrete color scales](https://plotly.com/python/discrete-color/).
+        color_scale: Name of the color scale to use (see `utils/color_palettes.py`).
         nb_of_generations: The number of generations to display.
         color_by: The category used to color the chart.
         save: Whether to save the file as a PNG.
@@ -81,13 +66,12 @@ def generate_sunburst_from_gedcom(
     gedcom_parser = Parser()
     gedcom_parser.parse_file(gedcom_path)
 
-    ancestors = get_ancestors_structure(gedcom_parser)
-    generations_dict = get_generations(gedcom_parser)
+    ancestors = get_ancestors_structure(gedcom_parser, root)
+    generations_dict = get_generations(gedcom_parser, root)
 
     parents, children, values = [], [""], []  # The base data for the sunburst chart
-    generations, patronyms, birth_places, birth_years, death_places, death_years = (
+    generations, patronyms, places, birth_years, death_years = (
         [1],
-        [],
         [],
         [],
         [],
@@ -104,9 +88,8 @@ def generate_sunburst_from_gedcom(
                 individual_data = ancestors.get(individual, {})
                 individual_parents = individual_data.get("parents")
                 birth_years.append(individual_data.get("birth", None))
-                birth_places.append(individual_data.get("birth_place", None))
+                places.append(individual_data.get("place", None))
                 death_years.append(individual_data.get("death", None))
-                death_places.append(individual_data.get("death_year", None))
 
                 if generation_number == 1:  # root of the sunburst chart
                     parents.append(individual)
@@ -124,30 +107,10 @@ def generate_sunburst_from_gedcom(
                     values.append(value)
                     generations.append(generation_number)
 
-    # Retrieves the patronym of the individual
-    names_to_prettify = []
-    for p in parents:
-        last_name = re.search(
-            r"^((?:[A-ZÀÂÄÇÉÈÊËÎÏÔÖÙÛÜŸ][a-zàâäçéèêëîïôöùûüÿ\-]+ ?)+(?:\s?\([^)]+\))?) ([A-ZÀÂÄÇÉÈÊËÎÏÔÖÙÛÜŸ ]+)$",
-            p,
-        )
-        if last_name:
-            patronyms.append(last_name.group(2))
-            # Add a line break when the name is too long
-            if len(p) > 20:
-                pretty_name = "<br>".join(last_name.groups())
-                name_index_parents = parents.index(p)
-                name_index_children = children.index(p) if p in children else None
-                names_to_prettify.append(
-                    (name_index_parents, name_index_children, pretty_name)
-                )
-        else:
-            patronyms.append("")
-    for i_parent, i_children, name in names_to_prettify:
-        parents[i_parent] = name
-        if i_children:
-            children[i_children] = name
-            children[i_children + 1] = name
+    # Process metadata
+    patronyms = extract_patronyms(parents)
+    parents, children = wrap_text(parents, children)
+    parents, children = add_dates_to_names(ancestors, parents, children)
 
     data = pd.DataFrame(
         {
@@ -156,13 +119,16 @@ def generate_sunburst_from_gedcom(
             "values": values,
             "generations": generations,
             "patronyms": patronyms,
-            "birth_places": birth_places,
+            "regions": [p.region for p in places],
+            "departments": [p.department for p in places],
+            "cities": [p.city for p in places],
             "birth_years": birth_years,
-            "death_places": death_places,
             "death_years": death_years,
         }
     )
     data["hover_text"] = data.apply(add_place_and_date_data, axis=1)
+    palette = getattr(color_palettes, color_scale.upper(), px.colors.qualitative.Pastel)
+    data = color_by_category(data, color_by, palette)
 
     kwargs = {
         "data_frame": data,
@@ -174,11 +140,8 @@ def generate_sunburst_from_gedcom(
     }
 
     if pd.api.types.is_numeric_dtype(data[color_by]):
-        kwargs["color_continuous_scale"] = color_scale
+        kwargs["color_continuous_scale"] = palette
     else:
-        palette = getattr(
-            px.colors.qualitative, color_scale.title(), px.colors.qualitative.Pastel1
-        )
         kwargs["color_discrete_sequence"] = palette
 
     fig = px.sunburst(**kwargs)
@@ -195,7 +158,3 @@ def generate_sunburst_from_gedcom(
 
     if save:
         fig.write_image("family_tree.png", width=3000, height=2500)
-
-
-if __name__ == "__main__":
-    generate_sunburst_from_gedcom()

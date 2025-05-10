@@ -1,8 +1,41 @@
 from gedcom.element.individual import IndividualElement
 from gedcom.parser import Parser
+from dataclasses import dataclass, fields
 
 
-def get_generations(parser: Parser) -> dict[int, list[list[str]]]:
+@dataclass
+class Place:
+    city: str
+    postal_code: str
+    department: str
+    region: str
+    country: str
+
+    @classmethod
+    def from_string(cls, input_str: str, delimiter: str = ", "):
+        """Parse a string into a Place object.
+        The string must be a French address.
+
+        Args:
+            input_str: The string containing the address.
+            delimiter: The delimiter for the different element.
+
+        Returns:
+            A Place object.
+        """
+        if not input_str or delimiter not in input_str:
+            return Place("Unknown", "Unknown", "Unknown", "Unknown", "Unknown")
+        parts = input_str.split(delimiter)
+        if (
+            len(parts) > 5
+        ):  # There can be hamlet or other stuff at the beginning of the address
+            parts = parts[len(parts) - 5 :]
+        field_types = [f.type for f in fields(cls)]
+        typed_parts = [t(p) for t, p in zip(field_types, parts)]
+        return cls(*typed_parts)
+
+
+def get_generations(parser: Parser, root: str = "") -> dict[int, list[list[str]]]:
     """Create a dictionary structure of generations.
     The keys of the dictionary are the generation numbers.
     The values of the dictionary are the list of ancestors, grouped by couples.
@@ -13,6 +46,7 @@ def get_generations(parser: Parser) -> dict[int, list[list[str]]]:
 
     Args:
         parser: The GEDCOM parser.
+        root: The name of the root individual.
 
     Returns:
         The generations in the form of a dictionary.
@@ -22,6 +56,10 @@ def get_generations(parser: Parser) -> dict[int, list[list[str]]]:
             lambda x: isinstance(x, IndividualElement), parser.get_root_child_elements()
         )
     )
+    if root:
+        for i, individual in enumerate(individual_elements):
+            if " ".join(individual.get_name()) != root:
+                individual_elements.pop(i)
     root_individual = individual_elements[0]
 
     n = 1
@@ -46,32 +84,24 @@ def get_generations(parser: Parser) -> dict[int, list[list[str]]]:
     return individuals
 
 
-def get_ancestors_structure(parser: Parser) -> dict[str, dict[str, str | list[str]]]:
+def get_ancestors_structure(
+    parser: Parser, root: str = ""
+) -> dict[str, dict[str, str | list[str]]]:
     """Create a dictionary to keep track of family relationships.
     The keys of the dictionary are the name of each individual.
     The values of the dictionary are dictionaries with the following keys:
         - parents
         - birth (the birth year of the individual)
-        - birth_place
+        - place (the birth place of the individual)
         - death (the death year of the individual)
-        - death_place
 
     Args:
         parser: The GEDCOM parser.
+        root: The name of the root individual.
 
     Returns:
         A dictionary with the name of each individuals and their parents.
     """
-    # ancestors = {
-    #     " ".join(individual.get_name()): [
-    #         " ".join(p.get_name()) for p in parser.get_parents(individual)
-    #     ]
-    #     for individual in filter(
-    #         lambda x: isinstance(x, IndividualElement),
-    #         parser.get_root_child_elements(),
-    #     )
-    # }
-    # return ancestors
     ancestors = {}
     individual_elements = list(
         filter(
@@ -81,18 +111,18 @@ def get_ancestors_structure(parser: Parser) -> dict[str, dict[str, str | list[st
 
     for individual in individual_elements:
         individual_name = " ".join(individual.get_name())
+        if root and root != individual_name:
+            continue
         parents = parser.get_parents(individual=individual)
-        birth_year, birth_place, _ = individual.get_birth_data()
-        death_year, death_place, _ = individual.get_death_data()
+        birth_year, death_year = (
+            individual.get_birth_year(),
+            individual.get_death_year(),
+        )
+        _, place, _ = individual.get_birth_data()
         ancestors[individual_name] = {
             "parents": [" ".join(p.get_name()) for p in parents],
-            "birth": birth_year.rsplit(" ")[-1] or None,
-            "birth_place": birth_place.split(", ")[2]
-            if len(birth_place.split(", ")) > 2
-            else None,  # département
-            "death": death_year.rsplit(" ")[-1] or None,
-            "death_place": death_place.split(", ")[2]
-            if len(death_place.split(", ")) > 2
-            else None,  # département
+            "birth": birth_year if birth_year > -1 else None,
+            "place": Place.from_string(place),
+            "death": death_year if death_year > -1 else None,
         }
     return ancestors

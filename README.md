@@ -15,7 +15,7 @@ generate-tree --gedcom-path ./gedcom.ged
 
 If you want to change the color scale:
 ```bash
-generate-tree --gedcom-path ./gedcom.ged --color-scale sunset
+generate-tree --gedcom-path ./gedcom.ged --color-scale earth
 ```
 
 If you want to save the family tree as a PNG file:
@@ -49,4 +49,4 @@ pip install -e .
 
 
 # TODO
-[ ] Add option to display dates and places
+[ ] Add palettes examples.

@@ -1,43 +1,50 @@
-import pandas as pd
 import re
 import textwrap
+from utils.constants import STRAUSS_HOWE_CLASSIFICATION, PALLETTES
 
 
-def add_place_and_date_data(row: pd.Series) -> str:
-    """Add additional place and date data to an individual so it can be displayed
-    on the chart by hivering.
-
-    Args:
-        row : The pandas dataframe row to process.
-
-    Returns:
-        Additional birth date and place data.
-    """
-    lines = [f"<b>{row['individuals']}</b>"]
-    if pd.notna(row["birth_years"]):
-        lines.append(f"Born in {int(row['birth_years'])}")
-    if pd.notna(row["cities"]) and pd.notna(row["departments"]):
-        lines.append(f"({row['cities']}, {row['departments']})")
-    if pd.notna(row["death_years"]):
-        lines.append(f"Died in {int(row['death_years'])}")
-    return "<br>".join(lines)
-
-
-def color_by_category(df: pd.DataFrame, category: str, palette: str):
-    """Add a color column to a DataFrame based on the unique values of a specified category.
+def color_by_category(data: dict, category: str, palette: str):
+    """Add a color column to a dictionary based on the unique values of a specified category.
 
     Args:
-        df: The input DataFrame containing the category.
-        category: The name of the column within the DataFrame that contains the categories.
-        palette: The palette from which colors are drawn.
+        data: The input dictionary containing the category.
+        category: The name of the column within the dictionary that contains the categories.
 
     Returns:
-        The input DataFrame with an additional `color` column.
+        The input dictionary with an additional `color` column.
     """
-    unique_keys = df[category].unique()
-    color_map = {key: palette[i % len(palette)] for i, key in enumerate(unique_keys)}
-    df["color"] = df[category].map(color_map)
-    return df
+    chosen_palette = PALLETTES.get(palette)
+    colors = []
+    unique_keys = list(set(data[category]))
+    color_map = {
+        key: chosen_palette[i % len(chosen_palette)]
+        for i, key in enumerate(unique_keys)
+    }
+    for d in data[category]:
+        colors.append(color_map.get(d, "#a6a6a6"))
+    return colors
+
+
+def add_strauss_howe_classification(dates: list) -> list[str]:
+    """Regroup generations based on the [Strauss-Howe generational theory](https://en.wikipedia.org/wiki/Strauss%E2%80%93Howe_generational_theory).
+
+    Args:
+        dates: The list of birth years.
+
+    Returns:
+        The list of generations' names.
+    """
+    generations = []
+    for d in dates:
+        try:
+            birth_date = int(d["year"])
+            for gen, period in STRAUSS_HOWE_CLASSIFICATION.items():
+                if period.get("start") <= birth_date <= period.get("end"):
+                    generations.append(gen)
+                    continue
+        except Exception:
+            generations.append(0)
+    return generations
 
 
 def wrap_text(parents: list[str], children: list[str]) -> tuple[list[str], list[str]]:
@@ -106,7 +113,6 @@ def add_dates_to_names(
 
     Returns:
         The parent and children lists with updated names.
-
     """
     indexes = []
     for p in parents:

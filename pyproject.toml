@@ -8,14 +8,16 @@ description = "Python package that generates a sunburst chart from a GEDOM file.
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "click",
-    "kaleido",
+    "aiofiles",
+    "fastapi",
     "numpy",
     "pandas",
     "plotly",
     "pre-commit",
     "python-gedcom",
-    "ruff"
+    "python-multipart",
+    "ruff",
+    "uvicorn"
 ]
 license = "GPL-3.0-or-later"
 license-files = ["COPYING"]

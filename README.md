@@ -6,9 +6,9 @@ This project uses FastAPI with python 3.10 for the backend and Vite + React for 
 
 ### 1. Backend (FastAPI)
 ```bash
-cd backend
 python -m venv venv
 source venv/bin/activate
+cd backend
 pip install -r requirements.txt
 uvicorn main:app --reload --port 5000
 ```

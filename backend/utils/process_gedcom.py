@@ -178,16 +178,17 @@ def parse_gedcom_to_sunburst(file_bytes, nb_of_generations, color_by, palette):
     parents, children = wrap_text(parents, children)
     parents, children = add_dates_to_names(ancestors, parents, children)
     periods = add_strauss_howe_classification(years)
+    data_dict = {
+        "patronym": patronyms,
+        "generation": generations,
+        "region": [p.region for p in places],
+        "department": [p.department for p in places],
+        "city": [p.city for p in places],
+        "year": periods,
+    }
 
     colors = color_by_category(
-        {
-            "patronym": patronyms,
-            "generation": generations,
-            "region": [p.region for p in places],
-            "department": [p.department for p in places],
-            "city": [p.city for p in places],
-            "year": periods,
-        },
+        data_dict,
         category=color_by,
         palette=palette,
     )
@@ -200,5 +201,7 @@ def parse_gedcom_to_sunburst(file_bytes, nb_of_generations, color_by, palette):
             "marker": {"colors": colors},
             "branchvalues": "total",
             "rotation": -30,
+            "hovertext": parents,
+            "hoverinfo": "text",
         }
     ]

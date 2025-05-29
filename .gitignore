@@ -2,3 +2,4 @@ venv/
 *.ged
 __pycache__/
 *.egg-info/
+.ruff_cache

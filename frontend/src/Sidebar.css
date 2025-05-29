@@ -1,0 +1,147 @@
+/* Suggested placement: Sidebar.css or a global variables file */
+:root {
+  --genealogy-bg: #f4f0e6;               
+  --genealogy-input-bg: #e8e0d1;         
+  --genealogy-text-primary: #5d4a3a;     
+  --genealogy-text-secondary: #7a6b5d;   
+  --genealogy-border: #d0c4b3;           
+  --genealogy-accent-primary: #7a6b5d;   
+  --genealogy-accent-primary-hover: #6b5b4f;/* Darker hover for primary accent */
+  --genealogy-accent-secondary: #afa08f; 
+  --genealogy-focus-ring: rgba(122, 107, 93, 0.25);
+
+ 
+  --primary-bg: var(--genealogy-bg);
+  --secondary-bg: var(--genealogy-input-bg);
+  --text-light: var(--genealogy-text-primary);
+  --text-dark: var(--genealogy-text-primary); 
+  --accent-color: var(--genealogy-accent-primary);
+
+ 
+  --sidebar-width: 300px;
+  --sidebar-width-collapsed: 60px;
+
+ 
+  --font-family-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-family-serif: "Merriweather", "Georgia", serif;
+}
+
+/* Apply base font to the sidebar for consistency */
+body {
+  font-family: var(--font-family-sans);
+}
+/* Sidebar.css */
+/* :root variables should be at the top of this file or a global one (as shown in step 1) */
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: var(--primary-bg);
+  color: var(--text-light);     
+  font-family: var(--font-family-sans);
+  width: var(--sidebar-width);
+  transition: width 0.3s ease, padding 0.3s ease;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  z-index: 1000;
+  box-shadow: 3px 0px 10px rgba(0,0,0,0.05);
+}
+
+.sidebar.closed {
+  width: var(--sidebar-width-collapsed);
+  padding: 1.5rem 0.5rem;
+  align-items: center;
+}
+
+.sidebar-toggle {
+  display: flex;
+  width: 100%;
+  justify-content: flex-end;
+  cursor: pointer;
+  font-size: 1.5rem;
+  color: var(--text-light);
+  margin-bottom: 2rem;
+}
+
+.sidebar.closed .sidebar-toggle {
+  justify-content: center;
+}
+
+.sidebar-section {
+  margin-bottom: 1.75rem;
+  width: 100%;
+}
+.sidebar-section:last-child {
+  margin-bottom: 0;
+}
+
+/* Custom File Input Styling */
+.upload-section input[type="file"]#file-upload {
+  display: none;
+}
+
+.custom-file-upload {
+  display: block;
+  width: 100%;
+  padding: 0.9rem 1rem;
+  background-color: var(--secondary-bg);
+  color: var(--genealogy-text-secondary);
+  border: 2px dashed var(--genealogy-accent-secondary);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-align: center;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.custom-file-upload:hover {
+  background-color: var(--genealogy-border);
+  border-color: var(--genealogy-accent-primary);
+  color: var(--genealogy-text-primary);
+}
+
+/* Button Styling */
+.generate-button {
+  background: var(--accent-color);
+  color: var(--genealogy-bg);
+  padding: 0.9rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  font-family: var(--font-family-sans);
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
+  font-size: 1rem;
+  box-sizing: border-box;
+  text-align: center;
+  box-shadow: 0 2px 5px rgba(93, 74, 58, 0.1);
+}
+
+.generate-button:hover {
+  background: var(--genealogy-accent-primary-hover);
+  box-shadow: 0 3px 7px rgba(93, 74, 58, 0.15);
+}
+
+/* Secondary button style (e.g., Download button) */
+.download-button {
+  background: transparent;
+  color: var(--accent-color);
+  border: 1px solid var(--accent-color);
+}
+
+.download-button:hover {
+  background: rgba(122, 107, 93, 0.05);
+  border-color: var(--genealogy-accent-primary-hover);
+  color: var(--genealogy-accent-primary-hover);
+  box-shadow: none;
+}

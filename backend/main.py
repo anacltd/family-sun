@@ -6,9 +6,15 @@ from utils.process_gedcom import parse_gedcom_to_sunburst
 
 app = FastAPI()
 
+origins = [
+    "http://localhost",  # Allow requests from host machine's localhost (any port)
+    "http://localhost:3000",  # Explicitly for the React app dev server or mapped Docker port
+    "http://localhost:5173",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -20,7 +26,7 @@ async def upload_gedcom(
     file: UploadFile = File(...),
     nb_of_generations: int = Form(3),
     color_by: str = Form("generation"),
-    palette: str = Form("pastel"),
+    palette: str = Form("moss"),
 ):
     try:
         file_bytes = await file.read()

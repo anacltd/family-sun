@@ -1,8 +1,11 @@
 # family-sun
 This repo generates a Plotly sunburst graph from a GEDCOM file (I really like genealogy and wanted to be able to generate pretty sunburst chart to display my lineage).
 
-## How-to use
-This project uses FastAPI with python 3.10 for the backend and Vite + React for the frontend.
+## Note
+This is sill very much a WIP.
+
+## How to use
+This project uses FastAPI with python 3.10 for the backend, and Vite + React for the frontend.
 
 ```
 docker-compose up
